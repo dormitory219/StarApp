@@ -70,8 +70,8 @@ function loadState() {
     children: [
       {
         id: childId,
-        name: "小星星",
-        age: 7,
+        name: "乐乐",
+        age: 5,
         avatar: "星",
         currentStars: 30,
         totalStars: 30,

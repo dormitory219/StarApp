@@ -1,4 +1,4 @@
-const STORAGE_KEY = "star_wish_growth_state_v1";
+const STORAGE_KEY = "star_wish_growth_state_v2";
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
 
@@ -693,6 +693,7 @@ document.querySelector("#timerButton").addEventListener("click", toggleTimer);
 document.querySelector("#resetDemo").addEventListener("click", () => {
   if (confirm("确定重置所有本地数据吗？")) {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("star_wish_growth_state_v1");
     state = loadState();
     activeChildId = state.activeChildId;
     saveState();

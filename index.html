@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f9f4ea" />
+    <title>星愿成长 - 免费儿童目标激励 H5</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell" id="app">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-mark">星</div>
+          <div>
+            <p class="eyebrow">免费开放版</p>
+            <h1>星愿成长</h1>
+          </div>
+        </div>
+        <button class="icon-button" id="modeToggle" type="button" aria-label="切换儿童模式">童</button>
+      </header>
+
+      <main class="screen">
+        <section class="view active" data-view="home">
+          <div class="hero-panel">
+            <div>
+              <p class="eyebrow">今日进度</p>
+              <h2 id="heroTitle">一起收集星星</h2>
+              <p id="heroText">完成目标、兑换心愿、喂养成长伙伴。</p>
+            </div>
+            <img class="pet-hero" src="assets/img/star-pet.png" alt="星愿成长宠物" />
+          </div>
+
+          <div class="child-strip" id="childStrip"></div>
+
+          <div class="stat-grid">
+            <div class="metric">
+              <span>可用星星</span>
+              <strong id="currentStars">0</strong>
+            </div>
+            <div class="metric">
+              <span>今日完成</span>
+              <strong id="todayDone">0/0</strong>
+            </div>
+            <div class="metric">
+              <span>连续坚持</span>
+              <strong id="streakDays">0 天</strong>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2>今日任务</h2>
+            <button class="text-button" data-open="goal">新增</button>
+          </div>
+          <div class="task-list" id="todayTasks"></div>
+        </section>
+
+        <section class="view" data-view="goals">
+          <div class="section-head">
+            <h2>目标库</h2>
+            <button class="primary-button small" data-open="goal">创建目标</button>
+          </div>
+          <div class="template-tabs" id="templateTabs"></div>
+          <div class="template-grid" id="templateGrid"></div>
+          <div class="section-head">
+            <h2>我的目标</h2>
+          </div>
+          <div class="goal-list" id="goalList"></div>
+        </section>
+
+        <section class="view" data-view="wishes">
+          <div class="section-head">
+            <h2>心愿兑换</h2>
+            <button class="primary-button small" data-open="wish">新心愿</button>
+          </div>
+          <div class="wish-balance">
+            <span>当前可兑换星星</span>
+            <strong id="wishStars">0</strong>
+          </div>
+          <div class="wish-list" id="wishList"></div>
+        </section>
+
+        <section class="view" data-view="growth">
+          <div class="pet-card">
+            <img src="assets/img/star-pet.png" alt="成长伙伴" />
+            <div>
+              <p class="eyebrow">成长伙伴</p>
+              <h2 id="petName">小星</h2>
+              <p id="petLevel">Lv.1 · 0/100 经验</p>
+              <div class="progress"><span id="petProgress"></span></div>
+              <button class="primary-button" id="feedPet" type="button">喂养 1 份星粮</button>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2>成长统计</h2>
+            <button class="text-button" id="exportData" type="button">导出</button>
+          </div>
+          <div class="chart-card">
+            <div class="chart-bars" id="chartBars"></div>
+          </div>
+
+          <div class="section-head">
+            <h2>成就勋章</h2>
+          </div>
+          <div class="badge-grid" id="badgeGrid"></div>
+        </section>
+
+        <section class="view" data-view="family">
+          <div class="section-head">
+            <h2>家庭设置</h2>
+            <button class="primary-button small" data-open="child">添加孩子</button>
+          </div>
+          <div class="settings-list">
+            <label class="switch-row">
+              <span>儿童模式</span>
+              <input id="childModeSwitch" type="checkbox" />
+            </label>
+            <label class="switch-row">
+              <span>允许儿童自主打卡</span>
+              <input id="allowChildCheckin" type="checkbox" />
+            </label>
+            <label class="switch-row">
+              <span>允许儿童兑换心愿</span>
+              <input id="allowChildRedeem" type="checkbox" />
+            </label>
+          </div>
+          <div class="section-head">
+            <h2>快捷奖惩</h2>
+          </div>
+          <div class="quick-actions">
+            <button data-bonus="5" type="button">奖励 5 星</button>
+            <button data-bonus="10" type="button">奖励 10 星</button>
+            <button data-bonus="-5" type="button">扣 5 星</button>
+          </div>
+          <div class="section-head">
+            <h2>星星流水</h2>
+          </div>
+          <div class="ledger-list" id="ledgerList"></div>
+          <button class="danger-button" id="resetDemo" type="button">重置本地数据</button>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button class="active" data-nav="home" type="button"><span>⌂</span>首页</button>
+        <button data-nav="goals" type="button"><span>◎</span>目标</button>
+        <button data-nav="wishes" type="button"><span>☆</span>心愿</button>
+        <button data-nav="growth" type="button"><span>◈</span>成长</button>
+        <button data-nav="family" type="button"><span>☰</span>家庭</button>
+      </nav>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <form class="modal" id="modalForm">
+        <div class="section-head">
+          <h2 id="modalTitle">新增</h2>
+          <button class="icon-button" id="closeModal" type="button" aria-label="关闭">×</button>
+        </div>
+        <div id="modalFields"></div>
+        <button class="primary-button full" type="submit">保存</button>
+      </form>
+    </div>
+
+    <div class="timer-fab" id="timerFab">
+      <button id="timerButton" type="button">25:00</button>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>

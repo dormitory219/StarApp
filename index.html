@@ -17,7 +17,6 @@
             <h1>星愿成长</h1>
           </div>
         </div>
-        <button class="icon-button" id="modeToggle" type="button" aria-label="切换儿童模式">童</button>
       </header>
 
       <main class="screen">
@@ -53,6 +52,55 @@
             <button class="text-button" data-open="goal">新增</button>
           </div>
           <div class="task-list" id="todayTasks"></div>
+        </section>
+
+        <section class="view" data-view="focus">
+          <div class="focus-card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">专注训练</p>
+                <h2>番茄钟</h2>
+              </div>
+              <span class="timer-pill" id="timerStatus">准备中</span>
+            </div>
+            <div class="timer-display" id="timerDisplay">14:00</div>
+            <div class="timer-tune" id="timerTune">
+              <div class="timer-stepper">
+                <button class="icon-button" data-timer-step="-1" type="button" aria-label="减少 1 分钟">−</button>
+                <div>
+                  <span>本次时长</span>
+                  <strong id="timerMinutesLabel">14 分钟</strong>
+                </div>
+                <button class="icon-button" data-timer-step="1" type="button" aria-label="增加 1 分钟">+</button>
+              </div>
+              <input id="timerMinutesRange" type="range" min="5" max="60" step="1" value="14" />
+              <div class="timer-presets">
+                <button data-timer-preset="7" type="button">7</button>
+                <button class="active" data-timer-preset="14" type="button">14</button>
+                <button data-timer-preset="21" type="button">21</button>
+                <button data-timer-preset="28" type="button">28</button>
+              </div>
+            </div>
+            <div class="progress timer-progress"><span id="timerProgress"></span></div>
+            <label class="field compact-field">
+              <span>关联目标</span>
+              <select id="timerGoalSelect"></select>
+            </label>
+            <div class="timer-actions">
+              <button class="primary-button" id="timerToggle" type="button">开始专注</button>
+              <button class="secondary-button" id="timerReset" type="button">重置</button>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2>今日目标计时</h2>
+          </div>
+          <div class="focus-goals" id="focusGoals"></div>
+
+          <div class="section-head">
+            <h2>专注记录</h2>
+          </div>
+          <div class="ledger-list" id="focusHistory"></div>
         </section>
 
         <section class="view" data-view="goals">
@@ -111,20 +159,6 @@
             <h2>家庭设置</h2>
             <button class="primary-button small" data-open="child">添加孩子</button>
           </div>
-          <div class="settings-list">
-            <label class="switch-row">
-              <span>儿童模式</span>
-              <input id="childModeSwitch" type="checkbox" />
-            </label>
-            <label class="switch-row">
-              <span>允许儿童自主打卡</span>
-              <input id="allowChildCheckin" type="checkbox" />
-            </label>
-            <label class="switch-row">
-              <span>允许儿童兑换心愿</span>
-              <input id="allowChildRedeem" type="checkbox" />
-            </label>
-          </div>
           <div class="section-head">
             <h2>快捷奖惩</h2>
           </div>
@@ -143,6 +177,7 @@
 
       <nav class="tabbar" id="tabbar">
         <button class="active" data-nav="home" type="button"><span>⌂</span>首页</button>
+        <button data-nav="focus" type="button"><span>◷</span>专注</button>
         <button data-nav="goals" type="button"><span>◎</span>目标</button>
         <button data-nav="wishes" type="button"><span>☆</span>心愿</button>
         <button data-nav="growth" type="button"><span>◈</span>成长</button>
@@ -161,12 +196,8 @@
       </form>
     </div>
 
-    <div class="timer-fab" id="timerFab">
-      <button id="timerButton" type="button">25:00</button>
-    </div>
-
     <div class="toast" id="toast" role="status"></div>
 
-    <script src="assets/js/app.js?v=2"></script>
+    <script src="assets/js/app.js?v=16"></script>
   </body>
 </html>

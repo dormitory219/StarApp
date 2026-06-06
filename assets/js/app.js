@@ -1,8 +1,13 @@
-const STORAGE_KEY = "star_wish_growth_state_v2";
+const STORAGE_KEY = "star_wish_growth_state_v3";
+const DEFAULT_FOCUS_MINUTES = 14;
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
 
 const templates = [
+  { category: "学习", title: "算术题", stars: 6, note: "完成当天约定的口算或计算练习", icon: "算" },
+  { category: "学习", title: "小怪兽学英语", stars: 6, note: "完成一次英语听说读练习", icon: "英" },
+  { category: "学习", title: "拼音学习", stars: 5, note: "完成拼读、认读或书写练习", icon: "拼" },
+  { category: "学习", title: "儿童1300字打卡", stars: 5, note: "完成当天汉字认读或复习", icon: "字" },
   { category: "学习", title: "阅读 20 分钟", stars: 5, note: "培养稳定阅读习惯", icon: "读" },
   { category: "学习", title: "背诵古诗", stars: 6, note: "每天完成一首或一段", icon: "诗" },
   { category: "学习", title: "整理错题", stars: 8, note: "记录错误原因和订正", icon: "题" },
@@ -15,6 +20,16 @@ const templates = [
   { category: "兴趣", title: "运动打卡", stars: 6, note: "跳绳、跑步或球类运动", icon: "动" },
   { category: "兴趣", title: "画画创作", stars: 5, note: "完成一幅小作品", icon: "画" },
   { category: "家务", title: "饭后收拾", stars: 5, note: "帮忙收碗或擦桌", icon: "家" }
+];
+
+const defaultGoalTitles = [
+  "算术题",
+  "小怪兽学英语",
+  "拼音学习",
+  "儿童1300字打卡",
+  "阅读 20 分钟",
+  "整理书包",
+  "运动打卡"
 ];
 
 const wishPresets = [
@@ -41,8 +56,8 @@ let activeView = "home";
 let activeTemplateCategory = "学习";
 let modalType = null;
 let timer = {
-  seconds: 25 * 60,
-  total: 25 * 60,
+  seconds: (state.settings?.focusMinutes || DEFAULT_FOCUS_MINUTES) * 60,
+  total: (state.settings?.focusMinutes || DEFAULT_FOCUS_MINUTES) * 60,
   running: false,
   interval: null
 };
@@ -50,22 +65,17 @@ let timer = {
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    return JSON.parse(saved);
+    return normalizeState(JSON.parse(saved));
   }
 
   const childId = uid("child");
-  const goals = [
-    createGoal(childId, templates[0]),
-    createGoal(childId, templates[5]),
-    createGoal(childId, templates[9])
-  ];
+  const goals = defaultGoalTitles.map((title) => createGoal(childId, templates.find((item) => item.title === title)));
 
   return {
     activeChildId: childId,
     settings: {
-      childMode: false,
-      allowChildCheckin: true,
-      allowChildRedeem: true
+      focusMinutes: DEFAULT_FOCUS_MINUTES,
+      defaultGoalsSeeded: true
     },
     children: [
       {
@@ -73,9 +83,9 @@ function loadState() {
         name: "乐乐",
         age: 5,
         avatar: "星",
-        currentStars: 30,
-        totalStars: 30,
-        pet: { name: "小星", level: 1, exp: 30, food: 2 }
+        currentStars: 0,
+        totalStars: 0,
+        pet: { name: "小星", level: 1, exp: 0, food: 0 }
       }
     ],
     goals,
@@ -89,12 +99,39 @@ function loadState() {
       createdAt: Date.now()
     })),
     checkins: [],
-    ledger: [
-      { id: uid("ledger"), childId, delta: 30, type: "bonus", reason: "新手星星礼包", createdAt: Date.now() }
-    ],
+    ledger: [],
     redemptions: [],
     timers: []
   };
+}
+
+function normalizeState(nextState) {
+  nextState.settings = nextState.settings || {};
+  nextState.settings.focusMinutes = clampMinutes(nextState.settings.focusMinutes || DEFAULT_FOCUS_MINUTES);
+  nextState.goals = (nextState.goals || []).map((goal) => ({
+    ...goal,
+    timerMinutes: Number(goal.timerMinutes || DEFAULT_FOCUS_MINUTES) === 25 ? DEFAULT_FOCUS_MINUTES : clampMinutes(goal.timerMinutes || DEFAULT_FOCUS_MINUTES)
+  }));
+  nextState.timers = nextState.timers || [];
+  nextState.ledger = nextState.ledger || [];
+  seedDefaultGoals(nextState);
+  return nextState;
+}
+
+function seedDefaultGoals(nextState) {
+  if (nextState.settings.defaultGoalsSeeded) return;
+  (nextState.children || []).forEach((child) => {
+    const childGoals = nextState.goals.filter((goal) => goal.childId === child.id);
+    defaultGoalTitles.forEach((title) => {
+      if (!childGoals.some((goal) => goal.title === title)) {
+        const template = templates.find((item) => item.title === title);
+        if (template) {
+          nextState.goals.push(createGoal(child.id, template));
+        }
+      }
+    });
+  });
+  nextState.settings.defaultGoalsSeeded = true;
 }
 
 function saveState() {
@@ -113,7 +150,7 @@ function createGoal(childId, source) {
     icon: source.icon || "星",
     schedule: "daily",
     weeklyLimit: 7,
-    timerMinutes: source.timerMinutes || 25,
+    timerMinutes: source.timerMinutes || DEFAULT_FOCUS_MINUTES,
     active: true,
     createdAt: Date.now()
   };
@@ -139,6 +176,10 @@ function timerSessionsOf(s, childId) {
   return s.timers.filter((item) => item.childId === childId);
 }
 
+function clampMinutes(value) {
+  return Math.max(5, Math.min(60, Number(value) || DEFAULT_FOCUS_MINUTES));
+}
+
 function todaysCheckin(goalId) {
   return state.checkins.find((item) => item.goalId === goalId && item.date === todayKey());
 }
@@ -156,10 +197,6 @@ function addLedger(childId, delta, type, reason) {
 function scoreGoal(goalId, level) {
   const goal = state.goals.find((item) => item.id === goalId);
   const child = activeChild();
-  if (state.settings.childMode && !state.settings.allowChildCheckin) {
-    toast("儿童模式下暂未开放自主打卡");
-    return;
-  }
   if (todaysCheckin(goalId)) {
     toast("今天这个目标已经评分了");
     return;
@@ -187,10 +224,6 @@ function scoreGoal(goalId, level) {
 function redeemWish(wishId) {
   const child = activeChild();
   const wish = state.wishes.find((item) => item.id === wishId);
-  if (state.settings.childMode && !state.settings.allowChildRedeem) {
-    toast("儿童模式下暂未开放自主兑换");
-    return;
-  }
   if (wish.status !== "available") return;
   if (child.currentStars < wish.cost) {
     toast("星星还不够，继续努力");
@@ -268,11 +301,9 @@ function streakFor(s, childId) {
 }
 
 function render() {
-  document.body.classList.toggle("child-mode", state.settings.childMode);
-  document.querySelector("#modeToggle").textContent = state.settings.childMode ? "家" : "童";
-  document.querySelector("#modeToggle").setAttribute("aria-label", state.settings.childMode ? "切换家长模式" : "切换儿童模式");
   renderChildren();
   renderHome();
+  renderFocus();
   renderTemplates();
   renderGoals();
   renderWishes();
@@ -306,7 +337,7 @@ function renderTaskCard(goal) {
   const checkin = todaysCheckin(goal.id);
   const status = checkin ? `已得 ${checkin.stars} 星` : `最高 ${goal.stars} 星`;
   return `
-    <article class="task-card">
+    <article class="task-card ${checkin ? "completed" : ""}">
       <div class="task-top">
         <div>
           <div class="task-title">${goal.icon} ${goal.title}</div>
@@ -314,7 +345,7 @@ function renderTaskCard(goal) {
         </div>
         <button class="icon-button" data-start-timer="${goal.id}" type="button">计</button>
       </div>
-      ${checkin ? `<div class="empty-state">今日已评分：${scoreText(checkin.score)}</div>` : `
+      ${checkin ? renderCheckinSummary(checkin) : `
         <div class="score-row">
           <button data-score="${goal.id}:try" type="button">需努力</button>
           <button data-score="${goal.id}:ok" type="button">完成</button>
@@ -323,6 +354,56 @@ function renderTaskCard(goal) {
       `}
     </article>
   `;
+}
+
+function renderCheckinSummary(checkin) {
+  const label = scoreText(checkin.score);
+  const tone = checkin.score === "great" ? "great" : checkin.score === "ok" ? "ok" : "try";
+  const title = checkin.score === "great" ? "闪闪完成" : checkin.score === "ok" ? "已完成" : "已记录";
+  return `
+    <div class="checkin-summary ${tone}">
+      <div class="checkin-mark">${checkin.score === "try" ? "·" : "✓"}</div>
+      <div>
+        <strong>${title}</strong>
+        <span>今日评价：${label}</span>
+      </div>
+      <div class="star-chip" aria-label="获得 ${checkin.stars} 颗星星">${"★".repeat(checkin.stars)}</div>
+    </div>
+  `;
+}
+
+function renderFocus() {
+  const child = activeChild();
+  const goals = goalsOf(child.id);
+  const selectedGoalId = timer.goalId && goals.some((goal) => goal.id === timer.goalId) ? timer.goalId : "";
+  document.querySelector("#timerGoalSelect").innerHTML = [
+    `<option value="">自由专注 · ${state.settings.focusMinutes} 分钟</option>`,
+    ...goals.map((goal) => `<option value="${goal.id}" ${goal.id === selectedGoalId ? "selected" : ""}>${goal.icon} ${goal.title} · ${goal.timerMinutes} 分钟</option>`)
+  ].join("");
+  document.querySelector("#focusGoals").innerHTML = goals.map((goal) => `
+    <article class="task-card">
+      <div class="task-top">
+        <div>
+          <div class="task-title">${goal.icon} ${goal.title}</div>
+          <div class="task-meta">${goal.category} · ${goal.timerMinutes} 分钟 · 完成奖励 ${goal.stars} 星</div>
+        </div>
+        <button class="icon-button" data-start-timer="${goal.id}" type="button">计</button>
+      </div>
+    </article>
+  `).join("") || empty("还没有可计时的目标，先到目标库添加一个。");
+  document.querySelector("#focusHistory").innerHTML = timerSessionsOf(state, child.id)
+    .slice(0, 10)
+    .map((item) => {
+      const goal = state.goals.find((goalItem) => goalItem.id === item.goalId);
+      const minutes = Math.round(item.duration / 60);
+      return `
+        <div class="ledger-item">
+          <span>${goal ? goal.title : "自由专注"}<br><small>${new Date(item.createdAt).toLocaleString("zh-CN")}</small></span>
+          <strong class="plus">${minutes} 分钟</strong>
+        </div>
+      `;
+    }).join("") || empty("暂无专注记录。");
+  updateTimerUi();
 }
 
 function scoreText(score) {
@@ -425,9 +506,6 @@ function recentSevenDays(childId) {
 }
 
 function renderFamily() {
-  document.querySelector("#childModeSwitch").checked = state.settings.childMode;
-  document.querySelector("#allowChildCheckin").checked = state.settings.allowChildCheckin;
-  document.querySelector("#allowChildRedeem").checked = state.settings.allowChildRedeem;
   const child = activeChild();
   document.querySelector("#ledgerList").innerHTML = state.ledger
     .filter((item) => item.childId === child.id)
@@ -462,7 +540,7 @@ function openModal(type, payload = {}) {
   if (type === "child") {
     title.textContent = "添加孩子";
     fields.innerHTML = field("昵称", "name", "", "input", "required maxlength='12'") +
-      field("年龄", "age", "7", "input", "type='number' min='1' max='18'") +
+      field("年龄", "age", "5", "input", "type='number' min='1' max='18'") +
       field("头像文字", "avatar", "星", "input", "maxlength='2'");
   }
   if (type === "goal") {
@@ -471,7 +549,7 @@ function openModal(type, payload = {}) {
       field("分类", "category", goal?.category || "学习", "input", "required") +
       field("图标文字", "icon", goal?.icon || "星", "input", "maxlength='2'") +
       field("完成星星", "stars", goal?.stars || 5, "input", "type='number' min='1' max='99'") +
-      field("番茄钟分钟", "timerMinutes", goal?.timerMinutes || 25, "input", "type='number' min='1' max='180'") +
+      field("番茄钟分钟", "timerMinutes", goal?.timerMinutes || DEFAULT_FOCUS_MINUTES, "input", "type='number' min='5' max='60'") +
       field("说明", "note", goal?.note || "", "textarea", "maxlength='80'") +
       `<input type="hidden" name="goalId" value="${goal?.id || ""}">`;
   }
@@ -498,7 +576,7 @@ function handleModalSubmit(event) {
     const newChild = {
       id: uid("child"),
       name: data.name,
-      age: Number(data.age || 7),
+      age: Number(data.age || 5),
       avatar: data.avatar || data.name.slice(0, 1),
       currentStars: 20,
       totalStars: 20,
@@ -518,7 +596,7 @@ function handleModalSubmit(event) {
         category: data.category,
         icon: data.icon || "星",
         stars: Number(data.stars),
-        timerMinutes: Number(data.timerMinutes),
+        timerMinutes: clampMinutes(data.timerMinutes),
         note: data.note
       });
     } else {
@@ -527,7 +605,7 @@ function handleModalSubmit(event) {
         category: data.category,
         icon: data.icon || "星",
         stars: Number(data.stars),
-        timerMinutes: Number(data.timerMinutes),
+        timerMinutes: clampMinutes(data.timerMinutes),
         note: data.note
       }));
     }
@@ -549,21 +627,30 @@ function handleModalSubmit(event) {
   toast("已保存");
 }
 
-function startTimer(goalId) {
+function switchView(viewName) {
+  activeView = viewName;
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === activeView));
+  document.querySelectorAll("#tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.nav === activeView));
+}
+
+function startTimer(goalId = "") {
   const goal = state.goals.find((item) => item.id === goalId);
-  timer.seconds = Number(goal?.timerMinutes || 25) * 60;
+  const minutes = clampMinutes(goal?.timerMinutes || state.settings.focusMinutes);
+  timer.seconds = minutes * 60;
   timer.total = timer.seconds;
-  timer.goalId = goalId;
+  timer.goalId = goal?.id || "";
   timer.running = false;
-  updateTimerButton();
-  toast(`已准备 ${goal?.timerMinutes || 25} 分钟番茄钟`);
+  clearInterval(timer.interval);
+  switchView("focus");
+  renderFocus();
+  toast(`已准备 ${minutes} 分钟番茄钟`);
 }
 
 function toggleTimer() {
   if (timer.running) {
     clearInterval(timer.interval);
     timer.running = false;
-    updateTimerButton();
+    updateTimerUi();
     return;
   }
   timer.running = true;
@@ -580,15 +667,61 @@ function toggleTimer() {
       render();
       toast("番茄钟完成，奖励 3 星");
     }
-    updateTimerButton();
+    updateTimerUi();
   }, 1000);
-  updateTimerButton();
+  updateTimerUi();
 }
 
-function updateTimerButton() {
+function resetTimer() {
+  clearInterval(timer.interval);
+  const goal = state.goals.find((item) => item.id === timer.goalId);
+  timer.seconds = clampMinutes(goal?.timerMinutes || state.settings.focusMinutes) * 60;
+  timer.total = timer.seconds;
+  timer.running = false;
+  updateTimerUi();
+}
+
+function setTimerMinutes(value, options = {}) {
+  if (timer.running) return;
+  const minutes = clampMinutes(value);
+  const goal = state.goals.find((item) => item.id === timer.goalId);
+  if (goal && options.updateGoal) {
+    goal.timerMinutes = minutes;
+  }
+  if (!goal) {
+    state.settings.focusMinutes = minutes;
+  }
+  timer.seconds = minutes * 60;
+  timer.total = timer.seconds;
+  saveState();
+  updateTimerUi();
+  renderFocus();
+}
+
+function updateTimerUi() {
   const minutes = String(Math.floor(timer.seconds / 60)).padStart(2, "0");
   const seconds = String(timer.seconds % 60).padStart(2, "0");
-  document.querySelector("#timerButton").textContent = timer.running ? `${minutes}:${seconds}` : `${minutes}:${seconds}`;
+  const display = document.querySelector("#timerDisplay");
+  const toggle = document.querySelector("#timerToggle");
+  const status = document.querySelector("#timerStatus");
+  const progress = document.querySelector("#timerProgress");
+  const label = document.querySelector("#timerMinutesLabel");
+  const range = document.querySelector("#timerMinutesRange");
+  const tune = document.querySelector("#timerTune");
+  if (!display || !toggle || !status || !progress || !label || !range || !tune) return;
+  display.textContent = `${minutes}:${seconds}`;
+  toggle.textContent = timer.running ? "暂停" : timer.seconds === 0 ? "再来一次" : "开始专注";
+  status.textContent = timer.running ? "专注中" : timer.seconds === 0 ? "已完成" : "准备中";
+  const used = timer.total ? (timer.total - timer.seconds) / timer.total : 0;
+  progress.style.width = `${Math.max(0, Math.min(100, used * 100))}%`;
+  const currentMinutes = clampMinutes(Math.round(timer.total / 60));
+  label.textContent = `${currentMinutes} 分钟`;
+  range.value = currentMinutes;
+  range.disabled = timer.running;
+  tune.querySelectorAll("button").forEach((button) => {
+    button.disabled = timer.running;
+    button.classList.toggle("active", Number(button.dataset.timerPreset) === currentMinutes);
+  });
 }
 
 function exportCsv() {
@@ -619,9 +752,7 @@ document.addEventListener("click", (event) => {
   if (!target) return;
 
   if (target.dataset.nav) {
-    activeView = target.dataset.nav;
-    document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === activeView));
-    document.querySelectorAll("#tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.nav === activeView));
+    switchView(target.dataset.nav);
   }
   if (target.dataset.child) {
     activeChildId = target.dataset.child;
@@ -637,6 +768,12 @@ document.addEventListener("click", (event) => {
     activeTemplateCategory = target.dataset.templateTab;
     renderTemplates();
   }
+  if (target.dataset.timerStep) {
+    setTimerMinutes(Math.round(timer.total / 60) + Number(target.dataset.timerStep));
+  }
+  if (target.dataset.timerPreset) {
+    setTimerMinutes(Number(target.dataset.timerPreset));
+  }
   if (target.dataset.template) {
     const [, index] = target.dataset.template.split(":");
     const item = templates.filter((template) => template.category === activeTemplateCategory)[Number(index)];
@@ -648,10 +785,12 @@ document.addEventListener("click", (event) => {
   if (target.dataset.editGoal) openModal("goal", { goalId: target.dataset.editGoal });
   if (target.dataset.deleteGoal) {
     const goal = state.goals.find((item) => item.id === target.dataset.deleteGoal);
+    if (!goal) return;
+    if (!confirm(`确定删除「${goal.title}」吗？`)) return;
     goal.active = false;
     saveState();
     render();
-    toast("目标已停用");
+    toast("目标已删除");
   }
   if (target.dataset.redeem) redeemWish(target.dataset.redeem);
   if (target.dataset.fulfill) fulfillWish(target.dataset.fulfill);
@@ -669,30 +808,20 @@ document.querySelector("#closeModal").addEventListener("click", closeModal);
 document.querySelector("#modalBackdrop").addEventListener("click", (event) => {
   if (event.target.id === "modalBackdrop") closeModal();
 });
-document.querySelector("#modeToggle").addEventListener("click", () => {
-  state.settings.childMode = !state.settings.childMode;
-  saveState();
-  render();
-});
-document.querySelector("#childModeSwitch").addEventListener("change", (event) => {
-  state.settings.childMode = event.target.checked;
-  saveState();
-  render();
-});
-document.querySelector("#allowChildCheckin").addEventListener("change", (event) => {
-  state.settings.allowChildCheckin = event.target.checked;
-  saveState();
-});
-document.querySelector("#allowChildRedeem").addEventListener("change", (event) => {
-  state.settings.allowChildRedeem = event.target.checked;
-  saveState();
-});
 document.querySelector("#feedPet").addEventListener("click", feedPet);
 document.querySelector("#exportData").addEventListener("click", exportCsv);
-document.querySelector("#timerButton").addEventListener("click", toggleTimer);
+document.querySelector("#timerToggle").addEventListener("click", toggleTimer);
+document.querySelector("#timerReset").addEventListener("click", resetTimer);
+document.querySelector("#timerGoalSelect").addEventListener("change", (event) => {
+  startTimer(event.target.value);
+});
+document.querySelector("#timerMinutesRange").addEventListener("input", (event) => {
+  setTimerMinutes(event.target.value);
+});
 document.querySelector("#resetDemo").addEventListener("click", () => {
   if (confirm("确定重置所有本地数据吗？")) {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("star_wish_growth_state_v2");
     localStorage.removeItem("star_wish_growth_state_v1");
     state = loadState();
     activeChildId = state.activeChildId;
@@ -704,4 +833,4 @@ document.querySelector("#resetDemo").addEventListener("click", () => {
 unlockBadges();
 saveState();
 render();
-updateTimerButton();
+updateTimerUi();

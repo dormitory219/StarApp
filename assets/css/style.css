@@ -205,6 +205,7 @@ h2 {
 .chart-card,
 .settings-list,
 .pet-card,
+.focus-card,
 .modal,
 .empty-state {
   background: var(--surface);
@@ -247,13 +248,22 @@ h2 {
 }
 
 .primary-button,
+.secondary-button,
 .danger-button {
   min-height: 44px;
   border-radius: 8px;
   padding: 0 16px;
-  color: #fff;
   font-weight: 900;
+}
+
+.primary-button {
+  color: #fff;
   background: var(--ink);
+}
+
+.secondary-button {
+  color: var(--ink);
+  background: #f1eadc;
 }
 
 .primary-button.small {
@@ -280,6 +290,11 @@ h2 {
   gap: 10px;
 }
 
+.focus-goals {
+  display: grid;
+  gap: 10px;
+}
+
 .task-card,
 .goal-card,
 .wish-card,
@@ -297,17 +312,112 @@ h2 {
   padding: 14px;
 }
 
+.task-card.completed {
+  background: linear-gradient(135deg, #ffffff 0%, #f4fbf7 100%);
+  border-color: rgba(88, 185, 154, 0.42);
+}
+
 .task-top,
 .wish-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.task-tools {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
 }
 
 .task-title,
 .wish-title {
   font-weight: 900;
   line-height: 1.35;
+}
+
+.icon-button.danger-icon {
+  background: #ffe1d6;
+  color: #8f382d;
+}
+
+.checkin-summary {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f6fbf8;
+  border: 1px solid rgba(88, 185, 154, 0.28);
+}
+
+.checkin-summary.ok {
+  background: #fffaf0;
+  border-color: rgba(245, 185, 64, 0.34);
+}
+
+.checkin-summary.try {
+  background: #fff5f1;
+  border-color: rgba(241, 120, 92, 0.32);
+}
+
+.checkin-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--mint);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.checkin-summary.ok .checkin-mark {
+  background: var(--gold);
+  color: #5b3b0b;
+}
+
+.checkin-summary.try .checkin-mark {
+  background: var(--coral);
+}
+
+.checkin-summary strong,
+.checkin-summary span {
+  display: block;
+}
+
+.checkin-summary strong {
+  font-size: 15px;
+}
+
+.checkin-summary span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.star-chip {
+  min-width: 48px;
+  max-width: 104px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 6px 7px;
+  border-radius: 8px;
+  background: #fff1bd;
+  color: #8a5a00;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(245, 185, 64, 0.36);
 }
 
 .task-meta,
@@ -320,7 +430,8 @@ h2 {
 
 .score-row,
 .card-actions,
-.quick-actions {
+.quick-actions,
+.timer-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
@@ -405,6 +516,125 @@ h2 {
 .wish-balance strong {
   font-size: 28px;
   color: #a16a00;
+}
+
+.focus-card {
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.focus-card .section-head {
+  margin: 0 0 10px;
+}
+
+.timer-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: #e3f3ed;
+  color: #28765f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.timer-display {
+  display: grid;
+  place-items: center;
+  min-height: 132px;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 247, 214, 0.2), transparent 8rem),
+    linear-gradient(135deg, #26302f 0%, #425a55 100%);
+  color: #fff7d6;
+  font-size: 58px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 28px rgba(38, 48, 47, 0.16);
+}
+
+.timer-tune {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.timer-stepper {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-stepper > div {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid rgba(232, 220, 200, 0.76);
+}
+
+.timer-stepper span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.timer-stepper strong {
+  font-size: 18px;
+}
+
+.timer-tune input[type="range"] {
+  width: 100%;
+  accent-color: var(--mint);
+}
+
+.timer-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.timer-presets button {
+  min-height: 38px;
+  border-radius: 8px;
+  background: #f1eadc;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.timer-presets button.active {
+  background: var(--gold);
+  color: #5b3b0b;
+}
+
+.timer-tune button:disabled,
+.timer-tune input:disabled {
+  opacity: 0.48;
+}
+
+.timer-progress {
+  margin: 14px 0;
+}
+
+.compact-field {
+  margin-bottom: 0;
+}
+
+.compact-field span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.timer-actions {
+  grid-template-columns: 1fr 0.72fr;
 }
 
 .pet-card {
@@ -531,7 +761,7 @@ input[type="checkbox"] {
   width: min(100vw, 480px);
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.92);
   border-top: 1px solid var(--line);
@@ -543,7 +773,7 @@ input[type="checkbox"] {
   border-radius: 8px;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -610,23 +840,6 @@ input[type="checkbox"] {
   resize: vertical;
 }
 
-.timer-fab {
-  position: fixed;
-  right: max(14px, calc((100vw - 480px) / 2 + 14px));
-  bottom: calc(88px + env(safe-area-inset-bottom));
-  z-index: 12;
-}
-
-.timer-fab button {
-  min-width: 74px;
-  height: 46px;
-  border-radius: 8px;
-  background: var(--ink);
-  color: #fff;
-  font-weight: 900;
-  box-shadow: var(--shadow);
-}
-
 .toast {
   position: fixed;
   left: 50%;
@@ -653,16 +866,6 @@ input[type="checkbox"] {
   padding: 18px;
   color: var(--muted);
   line-height: 1.55;
-}
-
-body.child-mode .settings-list,
-body.child-mode .ledger-list,
-body.child-mode .danger-button {
-  display: none;
-}
-
-body.child-mode .screen {
-  height: calc(100vh - 74px);
 }
 
 @media (max-width: 360px) {
